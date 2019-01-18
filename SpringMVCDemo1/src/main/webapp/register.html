@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <script src="node_modules/jquery/dist/jquery.js"></script>
+    <!--<script src="js/register.js"></script>-->
+    <script>
+        function register() {
+            // alert($("#form1").serialize());
+
+             $.ajax({
+                url:"test.do",
+                data:$("#form1").serialize(),
+                 success:function (data) {
+                    alert(data);
+
+                 },
+                 error:function () {
+                     
+                 }
+             });
+
+        }
+
+    </script>
+</head>
+<body>
+<form id="form1">
+用户名：<input type="text" id="uname" name="uname"><br>
+密码：<input type="password" id="upwd" name="upwd"><br>
+确认密码：<input type="password" id="rupwd" name="rupwd"><br>
+</form>
+<a href="javascript:register()">注册</a>
+</body>
+</html>

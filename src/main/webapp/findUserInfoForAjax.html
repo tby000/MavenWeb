@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <link rel="stylesheet" href="other/node_modules/bootstrap3/dist/css/bootstrap.min.css"/>
+    <link rel="stylesheet" href="other/node_modules/layui-src/dist/css/layui.css"/>
+    <link rel="stylesheet" href="other/node_modules/bootstrap3/dist/css/bootstrap-theme.min.css"/>
+    <script type="text/javascript" src="other/node_modules/jquery/dist/jquery.js"></script>
+    <script type="text/javascript" src="other/node_modules/bootstrap3/dist/js/bootstrap.js"></script>
+    <script type="text/javascript" src="other/node_modules/layui-src/dist/layui.all.js"></script>
+    <script type="text/javascript" src="other/node_modules/bootbox/bootbox.js"></script>
+    <script>
+        function searchUserByRole() {
+            var select_role=$("#searchByRole").val();
+            $.ajax({
+                url:"searchUserByRole.do",
+                data:{"role":select_role},
+                success:function (result) {
+                    //alert("111");
+                    var obj= JSON.parse(result);
+                    var str="";
+                    $.each(obj,function (index,row,ee) {
+                        str+="<tr align='center'><td><input type='checkbox' id='"+index+"' value='"+row.id+"'></td><td>"+row.uname+"</td><td>"+row.runame+"</td><td>"
+                            +new Date(row.lastLoginTime).toLocaleString()+"</td><td>"+row.role+"</td><td>"+
+                            "<a href='javascript:deleteUserById(\""+row.id+"\")' title='删除'><span class='glyphicon glyphicon-remove'></span></a>"+
+                            "<a href='javascript:showUserInfoModal(0,"+JSON.stringify(row)+")'><span class='glyphicon glyphicon-refresh'></span> </a></td></tr>"
+                        //sessionStorage.setItem("id",$("#name").val());
+
+                    });
+                    $("#alluser").html(str);
+                },
+                error:function () {
+                    alert("请求服务器失败");
+                }
+            })
+
+        }
+        function showUserInfoModal(id,data) {
+            if (id==0)
+            {
+                $("#myModalLabel").html("更新信息");
+                $("#btnModal").html("更新");
+                $("#uname").val(data.uname);
+                $("#runame").val(data.runame);
+                $("#role").val(data.role);
+                sessionStorage.setItem("id",data.id);
+            }
+            else
+            {
+                $("#myModalLabel").html("添加信息");
+                $("#btnModal").html("添加");
+                $("#uname").val("");
+                $("#runame").val("");
+                $("#role").val("");
+            }
+            $("#optionModal").modal("show");
+        }
+        function optionUserInfo() {
+            if($("#btnModal").html()=="添加"){
+                $.ajax({
+                    url:"addUserInfo.do",
+                    data:{"uname":$("#uname").val(),"runame":$("#runame").val(),"role":$("#role").val()},
+                    success:function (result) {
+                        if (result=="true") {
+                            layer.msg("添加成功");
+                            $("#optionModal").modal("hide");
+                            findAllUser();}
+                        else
+                            layer.msg("添加失败");
+                    },
+                    error:function () {
+                        layer.msg("访问服务器失败");
+                    }
+                });
+            }else {
+                $.ajax({
+                    url:"updateUserInfo.do",
+                    data:{"uname":$("#uname").val(),"runame":$("#runame").val(),"role":$("#role").val(),"id":sessionStorage.getItem("id")},
+                    success:function (data) {
+                        if (data=="true") {
+                            layer.msg("修改成功"+data);
+                            $("#optionModal").modal("hide");
+                            findAllUser();}
+                        else
+                            layer.msg("修改失败");
+                    },
+                    error:function () {
+                        layer.msg("访问服务器失败");
+                    }
+                });
+            }
+        }
+        function deleteUserById(id) {
+            console.info(id);
+            bootbox.confirm({
+                message: "确定删除记录?",
+                buttons: {
+                    cancel: {
+                        label: '取消',
+                        className: 'btn-danger'
+                    },
+                    confirm: {
+                        label: '确定',
+                        className: 'btn-success'
+                    }
+                },
+                callback: function (result) {
+                    if(result==true){
+                        $.ajax({
+                            url:"deleteUserById.do",
+                            data:{"id":id},
+                            success:function (result) {
+                                if (result == "true") {
+                                    layer.msg("删除成功");
+                                    findAllUser();
+                                }else {
+                                    layer.msg("删除失败!");
+                                }
+                            },
+                            error:function () {
+                                layer.msg("访问服务器失败!");
+                            }
+                        });
+                    }
+                }
+
+            });
+        }
+
+        function findAllUser() {
+            $.ajax({
+                url:"findAllUser.do",
+                success:function (result) {
+                    var obj= JSON.parse(result);
+                    var str="";
+                    $.each(obj,function (index,row,ee) {
+                        str+="<tr align='center'><td><input type='checkbox' value='"+row.id+"'></td><td>"+row.uname+"</td><td>"+row.runame+"</td><td>"
+                            +new Date(row.lastLoginTime).toLocaleString()+"</td><td>"+row.role+"</td><td>"+
+                            "<a href='javascript:deleteUserById(\""+row.id+"\")' title='删除'><span class='glyphicon glyphicon-remove'></span></a>"+
+                            "<a href='javascript:showUserInfoModal(0,"+JSON.stringify(row)+","+row.id+" )'><span class='glyphicon glyphicon-refresh'></span> </a></td></tr>"
+
+                    });
+                    $("#alluser").html(str);
+                },
+                error:function () {
+                    alert("服务器请求失败");
+                }
+            });
+        }
+        $(function () {
+            findAllUser();
+        })
+    </script>
+</head>
+<body>
+<div class="well">
+    <div class="form-inline">
+        <a href="javascript:showUserInfoModal(1)" class="btn btn-danger"><span class="glyphicon glyphicon-zoom-in"></span> 添加</a>
+        <select id="searchByRole" name="searchByRole" class="form-control" onchange="javascript:searchUserByRole()">
+            <option value="">全部</option>
+            <option value="admin">管理员</option>
+            <option value="teacher">教师</option>
+            <option value="student">学生</option>
+        </select>
+    </div>
+</div>
+<table class="table table-hover table-bordered table-striped">
+    <tr align="center">
+        <td>全选</td>
+        <td>用户名</td>
+        <td>真实姓名</td>
+        <td>最后登录时间</td>
+        <td>角色</td>
+        <td>操作</td>
+    </tr>
+    <tbody id="alluser"></tbody>
+</table>
+<!-- 模态框（Modal）-->
+<div class="modal fade" id="optionModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                <h4 class="modal-title" id="myModalLabel">添加用户信息</h4>
+            </div>
+            <div class="modal-body">
+                <div class="input-group">
+                    <input id="uname" type="text" class="form-control" placeholder="请输入姓名">
+                    <span class="glyphicon glyphicon-user input-group-addon"></span>
+                </div>
+                <br>
+                <div class="input-group">
+                    <input id="runame" type="text" class="form-control" placeholder="请输入真实姓名">
+                    <span class="glyphicon glyphicon-user input-group-addon"></span>
+                </div>
+                <br>
+                <div class="input-group">
+                    <select id="role" name="role" class="form-control">
+                        <option value="">请选择</option>
+                        <option value="admin">管理员</option>
+                        <option value="teacher">老师</option>
+                        <option value="student">学生</option>
+                    </select>
+                    <span class="glyphicon glyphicon-send input-group-addon"></span>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">关闭</button>
+                <button id="btnModal" type="button" class="btn btn-primary" onclick="optionUserInfo()">添加</button>
+            </div>
+        </div><!-- /.modal-content -->
+    </div><!-- /.modal -->
+</div>
+</body>
+</html>
